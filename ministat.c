@@ -7,16 +7,37 @@
  * ----------------------------------------------------------------------------
  *
  */
-#include <sys/ioctl.h>
 
+#if defined(_WIN32)
+#include "xgetopt.h"
+#else
+#include <sys/ioctl.h>
 #include <err.h>
+#include <unistd.h>
+#endif
+
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "queue.h"
+
+#if defined(_WIN32)
+
+void err(int eval, const char *fmt, ...)
+{
+  va_list ap;
+  if (fmt != NULL) {
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+  }
+  exit(eval);
+}
+
+#endif
 
 #define NSTUDENT 100
 #define NCONF 6
@@ -241,7 +262,7 @@ Relative(struct dataset *ds, struct dataset *rs, int confidx)
 	e = t * s;
 
 	if (fabs(d) > e) {
-	
+
 		printf("Difference at %.1f%% confidence\n", studentpct[confidx]);
 		printf("	%g +/- %g\n", d, e);
 		printf("	%g%% +/- %g%%\n", d * 100 / Avg(rs), e * 100 / Avg(rs));
@@ -333,7 +354,7 @@ PlotSet(struct dataset *ds, int val)
 		pl->bar[bar] = malloc(pl->width);
 		memset(pl->bar[bar], 0, pl->width);
 	}
-	
+
 	m = 1;
 	i = -1;
 	j = 0;
@@ -538,6 +559,9 @@ main(int argc, char **argv)
 	int flag_q = 0;
 	int termwidth = 74;
 
+#if defined(_WIN32)
+  termwidth = 80;
+#else
 	if (isatty(STDOUT_FILENO)) {
 		struct winsize wsz;
 
@@ -547,6 +571,7 @@ main(int argc, char **argv)
 			 wsz.ws_col > 0)
 			termwidth = wsz.ws_col - 2;
 	}
+#endif
 
 	ci = -1;
 	while ((c = getopt(argc, argv, "C:c:d:snqw:")) != -1)
@@ -609,7 +634,7 @@ main(int argc, char **argv)
 			ds[i] = ReadSet(argv[i], column, delim);
 	}
 
-	for (i = 0; i < nds; i++) 
+	for (i = 0; i < nds; i++)
 		printf("%c %s\n", symbol[i+1], ds[i]->name);
 
 	if (!flag_n && !flag_q) {

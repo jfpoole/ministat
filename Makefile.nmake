@@ -1,0 +1,6 @@
+# Sample makefile
+
+all: ministat.exe
+
+ministat.exe: ministat.c xgetopt_long.c
+  $(CC) $(CFLAGS) $**
